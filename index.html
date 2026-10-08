@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="description" content="Local speech-to-text in your browser" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <title>Browser Whisper (Hungarian)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <div class="app">
+      <header class="header">
+        <h1>Browser Whisper (Hungarian)</h1>
+        <p class="tagline">Runs in browser. Audio remains on device.</p>
+        <p class="header-repo">
+          <a
+            class="about-faq-link"
+            href="https://github.com/balshetzer/browser-whisper-hungarian"
+            target="_blank"
+            rel="noopener noreferrer"
+            ><svg
+              class="header-repo-icon"
+              viewBox="0 0 16 16"
+              width="13"
+              height="13"
+              aria-hidden="true"
+              focusable="false"
+            >
+              <path
+                fill="currentColor"
+                d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.5-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"
+              />
+            </svg><span>balshetzer/browser-whisper-hungarian</span></a
+          >
+        </p>
+      </header>
+
+      <main class="main">
+        <label class="dropzone" id="dropzone">
+          <input type="file" id="file" accept="audio/*,.mp3,.wav,.m4a,.webm,.ogg,.flac,.opus" hidden />
+          <span class="dropzone-text">Tap to choose an audio file</span>
+          <span class="dropzone-hint">Or drop a file anywhere on the page · MP3, WAV, M4A, WebM, OGG…</span>
+        </label>
+
+        <section class="cached-models" id="cachedModelsPanel" aria-live="polite">
+          <div class="cached-models-head">
+            <span class="cached-models-title">Cached models</span>
+            <span class="cached-models-total" id="cachedModelsTotal"></span>
+          </div>
+          <p class="cached-models-empty" id="cachedModelsEmpty">No cached models found.</p>
+          <ul class="cached-models-list" id="cachedModelsList"></ul>
+        </section>
+
+        <section class="preview-panel" id="previewPanel" hidden>
+          <div class="preview-card">
+            <p class="preview-label">Selected file</p>
+            <p class="preview-filename" id="previewFileName"></p>
+            <p class="preview-meta">
+              <span class="preview-meta-label" id="previewDurationLabel">Duration</span>
+              <span class="preview-duration" id="previewDuration"></span>
+            </p>
+            <div class="preview-model">
+              <label class="preview-model-label" id="whisperModelLabel" for="whisperModelTrigger">
+                Model size
+              </label>
+              <div class="preview-model-dd" id="whisperModelSelectRoot">
+                <input type="hidden" id="whisperModelId" autocomplete="off" />
+                <div class="custom-dd-wrap">
+                  <button
+                    type="button"
+                    id="whisperModelTrigger"
+                    class="custom-dd-trigger"
+                    aria-haspopup="listbox"
+                    aria-expanded="false"
+                    aria-labelledby="whisperModelLabel whisperModelTriggerText"
+                    aria-controls="whisperModelListbox"
+                    aria-describedby="whisperModelHint"
+                  >
+                    <span id="whisperModelTriggerText" class="custom-dd-trigger-text"></span>
+                    <span class="custom-dd-trigger-chevron" aria-hidden="true"></span>
+                  </button>
+                  <div id="whisperModelPanel" class="custom-dd-panel" hidden role="presentation">
+                    <ul
+                      id="whisperModelListbox"
+                      class="custom-dd-list"
+                      role="listbox"
+                      tabindex="-1"
+                      aria-labelledby="whisperModelLabel"
+                    ></ul>
+                  </div>
+                </div>
+              </div>
+              <p class="preview-model-hint" id="whisperModelHint">
+                Multilingual Whisper models, transcribing Hungarian. Download sizes shown are approximate (HF ONNX artifacts + tokenizer); each model caches locally after first use and may drift slightly if the hub or Transformers updates.
+              </p>
+            </div>
+            <div class="preview-inference">
+              <label class="preview-model-label" id="inferenceDeviceLabel" for="inferenceDeviceTrigger"
+                >Inference</label
+              >
+              <div class="preview-model-dd" id="inferenceDeviceSelectRoot">
+                <input type="hidden" id="inferenceDevice" value="wasm" autocomplete="off" />
+                <div class="custom-dd-wrap">
+                  <button
+                    type="button"
+                    id="inferenceDeviceTrigger"
+                    class="custom-dd-trigger"
+                    aria-haspopup="listbox"
+                    aria-expanded="false"
+                    aria-labelledby="inferenceDeviceLabel inferenceDeviceTriggerText"
+                    aria-controls="inferenceDeviceListbox"
+                    aria-describedby="inferenceDeviceHint"
+                  >
+                    <span id="inferenceDeviceTriggerText" class="custom-dd-trigger-text"></span>
+                    <span class="custom-dd-trigger-chevron" aria-hidden="true"></span>
+                  </button>
+                  <div id="inferenceDevicePanel" class="custom-dd-panel" hidden role="presentation">
+                    <ul
+                      id="inferenceDeviceListbox"
+                      class="custom-dd-list"
+                      role="listbox"
+                      tabindex="-1"
+                      aria-labelledby="inferenceDeviceLabel"
+                    ></ul>
+                  </div>
+                </div>
+              </div>
+              <p class="preview-model-hint" id="inferenceDeviceHint">
+                Default uses the CPU via WebAssembly. WebGPU runs on the GPU when your browser supports it (Chromium). First run still downloads weights to the local cache.
+              </p>
+            </div>
+            <div class="preview-range" id="previewRange">
+              <button
+                type="button"
+                class="preview-range-trigger"
+                id="previewRangeToggle"
+                aria-expanded="false"
+                aria-controls="previewRangeOptionsPanel"
+              >
+                <span class="preview-range-trigger-chevron" aria-hidden="true">
+                  <svg
+                    viewBox="0 0 10 10"
+                    width="9"
+                    height="9"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path d="M2 1.5 L8 5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+                    <path d="M2 8.5 L8 5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+                  </svg>
+                </span>
+                <span class="preview-range-trigger-label">Transcription Range</span>
+              </button>
+              <div class="preview-range-expand" id="previewRangeExpand" aria-hidden="true">
+                <div class="preview-range-expand-inner">
+                  <div class="preview-range-options" id="previewRangeOptionsPanel" inert>
+              <p class="preview-range-summary" id="previewRangeSummary"></p>
+              <div class="preview-range-manual">
+                <div class="preview-range-manual-field">
+                  <label class="preview-range-manual-label" for="rangeStartTs">Start (m:ss)</label>
+                  <div
+                    class="preview-range-ts preview-range-ts--disabled"
+                    id="rangeStartTs"
+                    role="textbox"
+                    tabindex="-1"
+                    aria-label="Start time, minutes and seconds"
+                    data-placeholder="0:00"
+                  >
+                    <div class="preview-range-ts-face"></div>
+                  </div>
+                </div>
+                <div class="preview-range-manual-field">
+                  <label class="preview-range-manual-label" for="rangeEndTs">End (m:ss)</label>
+                  <div
+                    class="preview-range-ts preview-range-ts--disabled"
+                    id="rangeEndTs"
+                    role="textbox"
+                    tabindex="-1"
+                    aria-label="End time, minutes and seconds"
+                    data-placeholder="0:00"
+                  >
+                    <div class="preview-range-ts-face"></div>
+                  </div>
+                </div>
+              </div>
+              <div
+                class="preview-range-timeline"
+                id="previewRangeTimeline"
+                role="group"
+                aria-label="Clip start and end on one timeline"
+              >
+                <label class="preview-range-sr" for="rangeStartSec">Start time</label>
+                <label class="preview-range-sr" for="rangeEndSec">End time</label>
+                <div class="preview-range-timeline-bar" aria-hidden="true"></div>
+                <input
+                  type="range"
+                  id="rangeStartSec"
+                  class="preview-range-input preview-range-input--start"
+                  min="0"
+                  max="1"
+                  step="0.1"
+                  value="0"
+                  disabled
+                />
+                <input
+                  type="range"
+                  id="rangeEndSec"
+                  class="preview-range-input preview-range-input--end"
+                  min="0"
+                  max="1"
+                  step="0.1"
+                  value="1"
+                  disabled
+                />
+              </div>
+              <p class="preview-range-legend" aria-hidden="true">Start — timeline — End</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="preview-transcript-chunks" id="whisperChunkRoot">
+              <button
+                type="button"
+                class="preview-range-trigger"
+                id="whisperChunkToggle"
+                aria-expanded="false"
+                    aria-controls="whisperChunkPanel"
+              >
+                <span class="preview-range-trigger-chevron" aria-hidden="true">
+                  <svg
+                    viewBox="0 0 10 10"
+                    width="9"
+                    height="9"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path d="M2 1.5 L8 5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+                    <path d="M2 8.5 L8 5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+                  </svg>
+                </span>
+                <span class="preview-transcript-chunks-trigger-text">
+                  <span class="preview-transcript-chunks-title">Live transcript segment length</span>
+                  <span class="preview-transcript-chunks-trigger-summary" id="whisperChunkTriggerSummary">~30 s — default (fewer updates)</span>
+                </span>
+              </button>
+              <div class="preview-range-expand" id="whisperChunkExpand" aria-hidden="true">
+                <div class="preview-range-expand-inner">
+                  <div
+                    class="preview-range-options preview-transcript-chunk-options"
+                    id="whisperChunkPanel"
+                    inert
+                  >
+                    <p class="preview-transcript-chunks-hint" id="whisperChunkHint">
+                      Whisper processes audio in sliding windows. Shorter windows run more decode steps so the transcript refreshes more often (more work in the browser).
+                    </p>
+                    <input type="hidden" id="whisperChunkSec" value="30" autocomplete="off" />
+                    <ul
+                      class="custom-dd-list"
+                      id="whisperChunkListbox"
+                      role="listbox"
+                      tabindex="-1"
+                      aria-label="Live transcript segment length"
+                    ></ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="preview-toggle">
+              <label class="preview-toggle-label" for="skipAnimations">
+                <input type="checkbox" id="skipAnimations" />
+                <span>Skip animations</span>
+              </label>
+              <label class="preview-toggle-label" for="sentencesOnNewLines">
+                <input type="checkbox" id="sentencesOnNewLines" />
+                <span>Sentences on new lines</span>
+              </label>
+              <label
+                class="preview-toggle-label preview-toggle-label--sub"
+                id="timestampSentencesWrap"
+                for="timestampSentences"
+              >
+                <input type="checkbox" id="timestampSentences" />
+                <span>Sentence timestamps</span>
+              </label>
+            </div>
+            <div class="preview-actions">
+              <button type="button" class="btn" id="startBtn" disabled>Start transcription</button>
+              <button type="button" class="btn ghost" id="changeFileBtn">Different file</button>
+            </div>
+          </div>
+        </section>
+
+        <div class="status-wrap">
+          <div class="status" id="status" aria-live="polite" aria-atomic="true"></div>
+          <div class="status-hint" id="statusHint" aria-live="polite"></div>
+          <details class="error-details" id="errorDetails" hidden>
+            <summary class="error-details-summary">Technical details</summary>
+            <pre class="error-details-pre" id="errorDetailsPre"></pre>
+          </details>
+        </div>
+
+        <section class="output-wrap" hidden id="outputSection">
+          <div class="output-toolbar">
+            <span class="output-label">Transcript</span>
+            <div class="output-actions">
+              <button type="button" class="btn ghost" id="copyBtn" disabled>COPY</button>
+              <button type="button" class="btn ghost" id="rawBtn" disabled>RAW</button>
+              <button type="button" class="btn ghost" id="downloadTxtBtn" disabled>
+                TXT
+                <span class="btn-arrow-down" aria-hidden="true">
+                  <svg viewBox="0 0 12 12" xmlns="http://www.w3.org/2000/svg" focusable="false">
+                    <path d="M6 1.5V8.3" />
+                    <path d="M2.6 5.6L6 9.3L9.4 5.6" />
+                  </svg>
+                </span>
+              </button>
+            </div>
+          </div>
+          <div class="output-stack">
+            <pre class="output" id="output" aria-live="polite"></pre>
+            <p id="outputWordCount" class="output-word-count" aria-live="polite" hidden></p>
+          </div>
+        </section>
+      </main>
+
+      <section class="about-faq" aria-labelledby="about-faq-about">
+        <h2 id="about-faq-about" class="about-faq-title">About</h2>
+        <p class="about-faq-p">
+          Browser Whisper is a small web app that turns audio files into text using OpenAI’s
+          <a
+            class="about-faq-link"
+            href="https://github.com/openai/whisper"
+            target="_blank"
+            rel="noopener noreferrer"
+            >Whisper</a
+          >
+          speech-recognition model. Everything runs locally in your
+          tab: your recording or file is not uploaded for cloud transcription.
+        </p>
+
+        <h3 class="about-faq-subtitle">How it works</h3>
+        <p class="about-faq-p">
+          The app loads a multilingual Whisper checkpoint (Tiny through Large v3 Turbo, in the size and precision you pick) through
+          <a
+            class="about-faq-link"
+            href="https://huggingface.co/docs/transformers.js/index"
+            target="_blank"
+            rel="noopener noreferrer"
+            >Transformers.js</a
+          >. <a
+            class="about-faq-link"
+            href="https://huggingface.co/Xenova/whisper-small/tree/main"
+            target="_blank"
+            rel="noopener noreferrer"
+            >ONNX weights</a
+          >
+          are fetched from
+          <a class="about-faq-link" href="https://huggingface.co/" target="_blank" rel="noopener noreferrer"
+            >Hugging Face</a
+          >
+          the first time you pick a model, then stored in the browser’s cache. Inference runs in a background worker —
+          either on the CPU via
+          <a
+            class="about-faq-link"
+            href="https://developer.mozilla.org/en-US/docs/WebAssembly"
+            target="_blank"
+            rel="noopener noreferrer"
+            >WebAssembly</a
+          >
+          or on the GPU via
+          <a
+            class="about-faq-link"
+            href="https://developer.mozilla.org/en-US/docs/Web/API/WebGPU_API"
+            target="_blank"
+            rel="noopener noreferrer"
+            >WebGPU</a
+          >
+          when your browser supports it. Long files are handled in overlapping time windows so Whisper can stream partial
+          text while it works through the clip.
+        </p>
+
+        <h3 class="about-faq-subtitle">How to use</h3>
+        <ol class="about-faq-steps">
+          <li><span class="about-faq-li-inner">Choose or drop an audio file (MP3, WAV, M4A, WebM, OGG, FLAC, Opus).</span></li>
+          <li><span class="about-faq-li-inner">Pick a model size: smaller downloads and runs faster; larger tends to be more accurate.</span></li>
+          <li><span class="about-faq-li-inner">Select CPU (WASM) or GPU (WebGPU) if offered.</span></li>
+          <li><span class="about-faq-li-inner">Optionally narrow the transcription range or adjust segment length for how often the live transcript refreshes.</span></li>
+          <li><span class="about-faq-li-inner">Press Start transcription, wait for processing, then read or copy the transcript.</span></li>
+        </ol>
+
+        <h3 id="about-faq-faq-heading" class="about-faq-title about-faq-title--section">FAQ</h3>
+        <div class="about-faq-faq" role="region" aria-labelledby="about-faq-faq-heading">
+          <div class="faq-block">
+            <p class="about-faq-p faq-q">Does my audio get uploaded?</p>
+            <p class="about-faq-p faq-a">
+              Transcription happens in your browser. Audio you select stays on your device for processing. Model files are
+              downloaded from Hugging Face’s CDN into your browser cache (like loading a heavy static site asset), not
+              uploaded as playable audio for cloud transcription.
+            </p>
+          </div>
+          <div class="faq-block">
+            <p class="about-faq-p faq-q">Why is the first run slow?</p>
+            <p class="about-faq-p faq-a">
+              The first time you use a given model size, the app downloads ONNX weights (hundreds of MB for larger
+              checkpoints). Later visits reuse the cached files, so startup is much quicker.
+            </p>
+          </div>
+          <div class="faq-block">
+            <p class="about-faq-p faq-q">What does WebAssembly do here?</p>
+            <p class="about-faq-p faq-a">
+              <a
+                class="about-faq-link"
+                href="https://developer.mozilla.org/en-US/docs/WebAssembly"
+                target="_blank"
+                rel="noopener noreferrer"
+                >WebAssembly</a
+              >
+              (WASM) is portable bytecode that runs in a browser sandbox. The ONNX runtime uses it so inference can execute on the
+              CPU without a plug-in when you choose the WASM option.
+            </p>
+          </div>
+          <div class="faq-block">
+            <p class="about-faq-p faq-q">What is WebGPU?</p>
+            <p class="about-faq-p faq-a">
+              <a
+                class="about-faq-link"
+                href="https://developer.mozilla.org/en-US/docs/Web/API/WebGPU_API"
+                target="_blank"
+                rel="noopener noreferrer"
+                >WebGPU</a
+              >
+              is a browser API that gives pages access to the GPU through a unified interface. Chromium-based browsers can
+              use it to accelerate ONNX inference on the GPU where supported.
+            </p>
+          </div>
+          <div class="faq-block">
+            <p class="about-faq-p faq-q">WebGPU vs CPU — what should I choose?</p>
+            <p class="about-faq-p faq-a">
+              Try <span class="faq-significant">GPU (WebGPU)</span> in Chromium-based browsers if it’s stable on your
+              machine — it often reduces wall-clock time once the model is cached. Fall back to
+              <span class="faq-significant">CPU (WebAssembly)</span> if WebGPU fails, isn’t supported, or uses too
+              much GPU memory elsewhere. Use the live transcript stats (<span class="faq-significant">words/min</span>
+              and <span class="faq-significant">audio/time ratio</span>) to benchmark each mode on your device and pick
+              the faster, steadier one.
+            </p>
+          </div>
+          <div class="faq-block">
+            <p class="about-faq-p faq-q">Which languages are supported?</p>
+            <p class="about-faq-p faq-a">
+              This build sets Whisper to transcribe Hungarian (language "hungarian") using multilingual checkpoints.
+            </p>
+            <p class="about-faq-p faq-a about-faq-simple-analytics">
+              This site uses Simple Analytics to track visits and user actions.
+              <a id="simpleAnalyticsOptOutLink" class="about-faq-link" href="#">Opt out.</a>
+            </p>
+            <p class="about-faq-p faq-a" id="lastUpdatedLine" hidden></p>
+          </div>
+        </div>
+      </section>
+    </div>
+    <script
+      async
+      src="https://scripts.simpleanalyticscdn.com/latest.js"
+      data-collect-dnt="true"
+    ></script>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
