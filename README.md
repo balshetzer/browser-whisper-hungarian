@@ -2,6 +2,8 @@
 
 Browser-based Hungarian speech-to-text with OpenAI Whisper, running fully on-device.
 
+Deployed at: https://www.balshetzer.com/browser-whisper-hungarian/
+
 This is a fork of [JoyousJohn/browser-whisper](https://github.com/JoyousJohn/browser-whisper) (MIT) that swaps the English-only `.en` checkpoints for multilingual Whisper ONNX models and transcribes Hungarian.
 
 ## Features
